@@ -1,0 +1,199 @@
+<html>
+
+<head>
+    <title>Blank</title>
+    <meta charset="UTF-8">
+</head>
+
+<body>
+    
+    <div class="divMain" >
+        <h2>Teste Login</h2>
+        <div style="margin-bottom: .5rem;"> 
+            <label for="inputUser">User:</label>
+            <input type="text" id="inputUser">
+        </div>
+        <div>
+            <label for="inputSenha">Senha:</label>
+            <input type="text" id="inputSenha">
+        </div>
+        <div id="divErro" style="margin-top: 10px; margin-bottom: 10px;"></div>
+        <button id="btnLogin">Login</button>
+    </div>
+
+    <div class="divMain2" style="display: none;">
+        <h2>Enviar Codigo</h2>
+        <div>
+            <label for="inputCodigo">Codigo:</label>
+            <input type="text" id="inputCodigo">
+        </div>
+        <button id="btnSend">Send</button>
+        <button id="btnBack">Back</button>
+    </div>
+    
+    <style>  
+        body{
+            height: 100%;
+            width: 100%;
+            margin: 0px;
+        }
+
+        .divMain{
+            border: 1px solid gray;
+            border-radius: 20px;
+            margin:150px auto; 
+            height: 300px; 
+            width: 280px; 
+            padding: 1rem;
+            display:flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            
+
+        }
+
+        .divMain label{
+            display: inline-block;
+            width: 50px;
+        }
+
+        #btnLogin{
+            width: 120px;
+            height: 35px;
+            margin-top: 10px;
+        }
+
+        .divMain2{
+            border: 1px solid gray;
+            border-radius: 20px;
+            margin:150px auto; 
+            height: 35%; 
+            width: 30%; 
+            padding: 1rem;
+            display:flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            
+
+        }
+
+        .divMain2 label{
+            display: inline-block;
+            width: 50px;
+        }
+
+        #btnSend{
+            width: 120px;
+            height: 35px;
+            margin-top: 10px;
+        }
+
+        #btnBack{
+            width: 120px;
+            height: 35px;
+            margin-top: 5px;
+        }
+
+    </style>
+    <script>
+
+        document.querySelector(".divMain").style.display = "";
+        document.querySelector(".divMain2").style.display = "none";
+
+        document.querySelector("#btnBack").onclick = ()=>{
+            let divMain = document.querySelector(".divMain");
+            let divMain2 = document.querySelector(".divMain2");
+
+            divMain.style.display = "";
+            divMain2.style.display = "none";
+        };
+
+        document.querySelector("#btnLogin").onclick = ()=>{
+
+            let inputUser = document.querySelector("#inputUser");
+            let inputSenha = document.querySelector("#inputSenha");
+            let divErro = document.querySelector("#divErro");
+            let divMain = document.querySelector(".divMain");
+            let divMain2 = document.querySelector(".divMain2");
+
+            
+            
+
+            divErro.innerText = '';
+            fetch("https://localhost:5001/Login", {
+
+					method: 'Post',
+                    headers: new Headers({'content-type': 'application/json'}),
+					body: JSON.stringify({user: inputUser.value,senha:inputSenha.value})
+
+				}).then(async (ret) => {
+                    let t = await ret.text();
+
+                    if(t.startsWith("Erro")){
+                        divErro.innerText = t;
+                        return;
+                    }
+
+                    let obj = JSON.parse(t);
+                    window.localStorage.setItem("user",t);
+                    if(obj.useAutenticacao == "S"){
+                        divMain.style.display = "none";
+                        divMain2.style.display = "";
+                    }else{
+                        window.location.href = './main.html' ;
+                    }
+
+				}).catch((err) => {
+                    divErro.innerText = err;
+					console.log(err)
+
+				});
+            
+        };
+
+        document.querySelector("#btnSend").onclick = ()=>{
+
+            const inputCodigo = document.querySelector("#inputCodigo");
+
+            if(inputCodigo.value == ""){
+                alert("Informe valor");
+                return;
+            }
+
+            let user = JSON.parse(window.localStorage.getItem("user"));
+            if(!user) {
+                dalert("Erro usuario" );
+                return;
+            }
+
+            
+            fetch("https://localhost:5001/DuasEtapas", {
+				method: 'Post',
+                headers: new Headers({'content-type': 'application/json'}),
+				body: JSON.stringify({key: inputCodigo.value,id: user.id, func:'aut' })
+			}).then(async (ret) => {
+                
+                let t = await ret.text();
+                console.log(t);
+				if(t.startsWith("OK")){
+                    window.location.href = './main.html' ;
+                }else{
+                    alert(t);
+                    inputCodigo.value = "";
+                }
+
+			}).catch((err) => {
+
+				console.log(err)
+
+			});
+
+        };
+
+        
+    </script>
+</body>
+
+</html>

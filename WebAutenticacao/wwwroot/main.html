@@ -1,0 +1,211 @@
+<html>
+
+<head>
+    <title>Blank</title>
+    <meta charset="UTF-8">
+</head>
+
+<body>
+
+    <div class="divMain" style="">
+        <h2>Pagina Principal</h2>
+        <button id="btnLogout">Logout</button>
+
+        <details style="margin-top: 1rem;">
+            <summary> Configurações </summary>
+            <div>
+                <label for="checkUsaAut">Habilitar autenticação em duas etapas: </label>
+                <input type="checkbox" id="checkUsaAut">
+            </div>
+
+            <div id="divEnable" style="display: none; margin-top: 10px;">
+                <div style=" display: flex; flex-direction: column;">
+                    <img id="imgQR" src="" width="150px" height="150px">
+                    <span id="spanCodigo" style="margin-top: 10px;"></span>
+                </div>
+                <div style="margin-top: 10px;">
+                    <label for="inputCodigoCad">Codigo:</label>
+                    <input type="text" id="inputCodigoCad">
+                    <button id="btnSendCad">Send</button>
+                </div>
+
+            </div>
+            <div id="divDesable" style="display: none;">
+                <div>
+                    <label for="inputCodigoDes">Codigo:</label>
+                    <input type="text" id="inputCodigoDes">
+                    <button id="btnSendDes">Send</button>
+                </div>
+            </div>
+
+            <div id="divResposta"></div>
+        </details>
+    </div>
+
+    <style>
+        body {
+            height: 100%;
+            width: 100%;
+            margin: 0px;
+        }
+
+        .divMain {
+            border: 1px solid gray;
+            border-radius: 20px;
+            margin: 150px auto;
+            height: 50%;
+            width: 50%;
+            padding: 1rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+
+        }
+    </style>
+    <script>
+
+        document.querySelector("#checkUsaAut").checked = JSON.parse(window.localStorage.getItem("user")).useAutenticacao == 'S';
+        document.querySelector("#btnLogout").onclick = () => window.location.href = './index.html';
+
+        document.querySelector("#checkUsaAut").onclick = () => {
+
+            const divEnable = document.querySelector("#divEnable");
+            const divDesable = document.querySelector("#divDesable");
+            const imgQR = document.querySelector("#imgQR");
+            const spanCodigo = document.querySelector("#spanCodigo");
+            const status = document.querySelector("#checkUsaAut").checked;
+
+            if (status) {
+
+                let user = JSON.parse(window.localStorage.getItem("user"));
+
+                if (!user) {
+                    alert("Erro usuario");
+                    return;
+                }
+
+                fetch("https://localhost:5001/DuasEtapas?id=" + user.id, {
+                    method: 'Get',
+                    headers: new Headers({ 'content-type': 'application/json' }),
+                }).then(async (ret) => {
+
+                    let t = await ret.text();
+                    if (t.startsWith("Erro")) {
+
+                        alert(t);
+                        return;
+
+                    }
+
+                    let obj = JSON.parse(t);
+                    imgQR.src = obj.img;
+                    spanCodigo.innerText = "Codigo: " + obj.key;
+
+                    divEnable.style.display = "";
+                    divDesable.style.display = "none";
+
+                }).catch((err) => {
+
+                    console.log(err)
+
+                });
+
+
+
+            } else {
+                divEnable.style.display = "none";
+                divDesable.style.display = "";
+            }
+
+        };
+
+        document.querySelector("#btnSendCad").onclick = () => {
+
+            const divResposta = document.querySelector("#divResposta");
+            const inputCodigoCad = document.querySelector("#inputCodigoCad");
+            const divEnable = document.querySelector("#divEnable");
+            const divDesable = document.querySelector("#divDesable");
+
+            divResposta.innerText = "";
+
+            if (inputCodigoCad.value == "") {
+                divResposta.innerText = "Informe seu codigo";
+                return;
+            }
+
+            let user = JSON.parse(window.localStorage.getItem("user"));
+            if (!user) {
+                divResposta.innerText = "Erro usuario";
+                return;
+            }
+
+            fetch("https://localhost:5001/DuasEtapas", {
+                method: 'Post',
+                headers: new Headers({ 'content-type': 'application/json' }),
+                body: JSON.stringify({ key: inputCodigoCad.value, id: user.id, func: 'add' })
+            }).then(async (ret) => {
+
+                let t = await ret.text();
+                if (t.startsWith("OK")) {
+                    divEnable.style.display = "none";
+                    divDesable.style.display = "none";
+                }
+                divResposta.innerText = t;
+
+            }).catch((err) => {
+
+                console.log(err)
+
+            });
+
+        };
+
+
+        document.querySelector("#btnSendDes").onclick = () => {
+
+            const divResposta = document.querySelector("#divResposta");
+            const inputCodigoDes = document.querySelector("#inputCodigoDes");
+            const divEnable = document.querySelector("#divEnable");
+            const divDesable = document.querySelector("#divDesable");
+
+            divResposta.innerText = "";
+
+            if (inputCodigoDes.value == "") {
+                divResposta.innerText = "Informe seu codigo";
+                return;
+            }
+
+            let user = JSON.parse(window.localStorage.getItem("user"));
+            if (!user) {
+                divResposta.innerText = "Erro usuario";
+                return;
+            }
+
+            fetch("https://localhost:5001/DuasEtapas", {
+                method: 'Post',
+                headers: new Headers({ 'content-type': 'application/json' }),
+                body: JSON.stringify({ key: inputCodigoDes.value, id: user.id, func: 'del' })
+            }).then(async (ret) => {
+
+                let t = await ret.text();
+                if (t.startsWith("OK")) {
+                    divEnable.style.display = "none";
+                    divDesable.style.display = "none";
+                }
+                divResposta.innerText = t;
+
+            }).catch((err) => {
+
+                console.log(err)
+
+            });
+
+        };
+
+
+
+    </script>
+</body>
+
+</html>
